@@ -8,6 +8,7 @@ import ChatSection from "./components/ChatSection";
 import SearchSection from "./components/SearchSection";
 import SettingsSection from "./components/SettingsSection";
 import { MessageSquare, Search, FileUp, Sparkles, FileText, ArrowRight } from "lucide-react";
+import { getApiBaseUrl } from "./config";
 
 function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -17,18 +18,19 @@ function App() {
 
   const fetchRegistryData = async () => {
     try {
+      const apiUrl = getApiBaseUrl();
       // Test server connection
-      const homeResponse = await axios.get("http://127.0.0.1:8000/");
+      const homeResponse = await axios.get(`${apiUrl}/`);
       if (homeResponse.data.status === "online" || homeResponse.data.message) {
         setIsServerOnline(true);
       }
 
       // Fetch documents list
-      const docsResponse = await axios.get("http://127.0.0.1:8000/documents");
+      const docsResponse = await axios.get(`${apiUrl}/documents`);
       setDocuments(docsResponse.data);
 
       // Fetch stats
-      const statsResponse = await axios.get("http://127.0.0.1:8000/stats");
+      const statsResponse = await axios.get(`${apiUrl}/stats`);
       setStats(statsResponse.data);
     } catch (error) {
       console.error("Backend offline or request failed:", error);
@@ -52,11 +54,11 @@ function App() {
           </div>
           <h3 className="text-lg font-bold text-white font-display mb-1">Backend Server Offline</h3>
           <p className="text-zinc-400 text-xs max-w-sm leading-relaxed mb-6">
-            We cannot establish a connection to your FastAPI backend at <code className="text-red-400">http://127.0.0.1:8000</code>. Please start the python server to access the platform.
+            We cannot establish a connection to your FastAPI backend at <code className="text-red-400">{getApiBaseUrl()}</code>. Please start the python server to access the platform.
           </p>
           <div className="bg-zinc-950/60 border border-zinc-850 rounded-xl p-4 text-left font-mono text-[11px] text-zinc-500 max-w-md w-full">
             <p className="font-bold text-zinc-400 mb-1">To start the backend:</p>
-            <p className="text-zinc-500">cd backend</p>
+            <p className="text-zinc-550">cd backend</p>
             <p className="text-zinc-550">.\venv\Scripts\python.exe -m uvicorn main:app --reload</p>
           </div>
         </div>

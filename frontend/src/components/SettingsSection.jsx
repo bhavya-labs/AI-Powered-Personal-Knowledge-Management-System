@@ -1,23 +1,28 @@
 import { useState, useEffect } from "react";
-import { Cpu, CloudLightning, Key, Trash2, CheckCircle2, ShieldAlert } from "lucide-react";
+import { Cpu, CloudLightning, Key, Trash2, CheckCircle2, ShieldAlert, Globe } from "lucide-react";
 import axios from "axios";
+import { getApiBaseUrl } from "../config";
 
 function SettingsSection({ onRegistryUpdate }) {
   const [engine, setEngine] = useState("local");
   const [apiKey, setApiKey] = useState("");
+  const [apiUrl, setApiUrl] = useState("http://127.0.0.1:8000");
   const [saveStatus, setSaveStatus] = useState("");
   const [isWiping, setIsWiping] = useState(false);
 
   useEffect(() => {
     const savedEngine = localStorage.getItem("mindmesh_engine") || "local";
     const savedKey = localStorage.getItem("mindmesh_gemini_key") || "";
+    const savedApiUrl = localStorage.getItem("mindmesh_api_url") || "http://127.0.0.1:8000";
     setEngine(savedEngine);
     setApiKey(savedKey);
+    setApiUrl(savedApiUrl);
   }, []);
 
   const handleSaveSettings = () => {
     localStorage.setItem("mindmesh_engine", engine);
     localStorage.setItem("mindmesh_gemini_key", apiKey);
+    localStorage.setItem("mindmesh_api_url", apiUrl);
     setSaveStatus("Settings saved successfully!");
     
     setTimeout(() => {
@@ -33,11 +38,11 @@ function SettingsSection({ onRegistryUpdate }) {
     try {
       setIsWiping(true);
       // Fetch all documents and delete them one by one
-      const docsResponse = await axios.get("http://127.0.0.1:8000/documents");
+      const docsResponse = await axios.get(`${getApiBaseUrl()}/documents`);
       const docs = docsResponse.data;
       
       for (const doc of docs) {
-        await axios.delete(`http://127.0.0.1:8000/documents/${doc.doc_id}`);
+        await axios.delete(`${getApiBaseUrl()}/documents/${doc.doc_id}`);
       }
 
       alert("Database wiped successfully!");
@@ -108,6 +113,24 @@ function SettingsSection({ onRegistryUpdate }) {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Backend API Configuration */}
+          <div className="space-y-3 pt-4 border-t border-zinc-800/85">
+            <label className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+              <Globe size={16} className="text-blue-400" />
+              Backend API Endpoint URL
+            </label>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Define the API base URL for your FastAPI backend. Use <code>http://127.0.0.1:8000</code> for local runs or paste your cloud URL (e.g. Render or Hugging Face Space URL).
+            </p>
+            <input
+              type="text"
+              value={apiUrl}
+              onChange={(e) => setApiUrl(e.target.value)}
+              placeholder="http://127.0.0.1:8000"
+              className="w-full bg-zinc-950/80 text-white border border-zinc-800 hover:border-zinc-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all rounded-xl py-3 px-4 outline-none text-sm placeholder:text-zinc-650"
+            />
           </div>
 
           {/* Gemini API Key */}

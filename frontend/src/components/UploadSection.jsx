@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Upload, FileText, Trash2, Calendar, Eye, FileUp, Database, ArrowRight } from "lucide-react";
 import axios from "axios";
+import { getApiBaseUrl } from "../config";
 
 function UploadSection({ documents = [], onRegistryUpdate }) {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -87,7 +88,7 @@ function UploadSection({ documents = [], onRegistryUpdate }) {
       setUploadStatus("Processing & Indexing PDF...");
 
       const response = await axios.post(
-        "http://127.0.0.1:8000/upload",
+        `${getApiBaseUrl()}/upload`,
         formData,
         { headers }
       );
@@ -124,7 +125,7 @@ function UploadSection({ documents = [], onRegistryUpdate }) {
     }
 
     try {
-      await axios.delete(`http://127.0.0.1:8000/documents/${docId}`);
+      await axios.delete(`${getApiBaseUrl()}/documents/${docId}`);
       if (activeInspectorDoc && activeInspectorDoc.doc_id === docId) {
         setActiveInspectorDoc(null);
       }

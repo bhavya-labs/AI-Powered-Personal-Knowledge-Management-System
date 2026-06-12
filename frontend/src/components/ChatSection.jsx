@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { MessageSquare, Send, Sparkles, AlertCircle, FileText, ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 import axios from "axios";
+import { getApiBaseUrl } from "../config";
 
 function ChatSection({ documents = [] }) {
   const [question, setQuestion] = useState("");
@@ -25,7 +26,7 @@ function ChatSection({ documents = [] }) {
 
   const fetchSessions = async (autoSelectId = null) => {
     try {
-      const response = await axios.get("http://127.0.0.1:8000/chats");
+      const response = await axios.get(`${getApiBaseUrl()}/chats`);
       const fetchedSessions = response.data;
       setSessions(fetchedSessions);
 
@@ -54,7 +55,7 @@ function ChatSection({ documents = [] }) {
   const handleSelectSession = async (chatId) => {
     try {
       setActiveChatId(chatId);
-      const response = await axios.get(`http://127.0.0.1:8000/chats/${chatId}`);
+      const response = await axios.get(`${getApiBaseUrl()}/chats/${chatId}`);
       setMessages(response.data.messages || []);
     } catch (error) {
       console.error("Error loading chat session messages:", error);
@@ -80,7 +81,7 @@ function ChatSection({ documents = [] }) {
       return;
     }
     try {
-      await axios.delete(`http://127.0.0.1:8000/chats/${chatId}`);
+      await axios.delete(`${getApiBaseUrl()}/chats/${chatId}`);
       if (activeChatId === chatId) {
         setActiveChatId("");
         // Reload list, it will automatically select the next latest
@@ -115,7 +116,7 @@ function ChatSection({ documents = [] }) {
     if (!currentChatId) {
       try {
         const titleText = queryText.length > 30 ? queryText.slice(0, 30) + "..." : queryText;
-        const createResponse = await axios.post("http://127.0.0.1:8000/chats", {
+        const createResponse = await axios.post(`${getApiBaseUrl()}/chats`, {
           title: titleText
         });
         currentChatId = createResponse.data.chat_id;
@@ -139,7 +140,7 @@ function ChatSection({ documents = [] }) {
 
     // Save User message to backend
     try {
-      await axios.post(`http://127.0.0.1:8000/chats/${currentChatId}/messages`, userMsg);
+      await axios.post(`${getApiBaseUrl()}/chats/${currentChatId}/messages`, userMsg);
     } catch (error) {
       console.error("Failed to save user message in backend:", error);
     }
@@ -157,7 +158,7 @@ function ChatSection({ documents = [] }) {
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/chat",
+        `${getApiBaseUrl()}/chat`,
         {
           question: queryText,
           doc_id: selectedDocId || null
@@ -173,7 +174,7 @@ function ChatSection({ documents = [] }) {
       };
 
       // Save AI message to backend
-      await axios.post(`http://127.0.0.1:8000/chats/${currentChatId}/messages`, aiMsg);
+      await axios.post(`${getApiBaseUrl()}/chats/${currentChatId}/messages`, aiMsg);
 
       // Append locally
       setMessages((prev) => [...prev, aiMsg]);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Search, FileText, ChevronRight, AlertCircle, Sparkles } from "lucide-react";
 import axios from "axios";
+import { getApiBaseUrl } from "../config";
 
 function SearchSection({ documents = [] }) {
   const [query, setQuery] = useState("");
@@ -17,7 +18,7 @@ function SearchSection({ documents = [] }) {
       setLoading(true);
       setSearched(true);
 
-      const response = await axios.post("http://127.0.0.1:8000/search", null, {
+      const response = await axios.post(`${getApiBaseUrl()}/search`, null, {
         params: {
           query: query,
           doc_id: selectedDocId || undefined
