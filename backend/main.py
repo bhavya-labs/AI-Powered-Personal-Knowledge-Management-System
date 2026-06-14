@@ -2,10 +2,6 @@ from fastapi import FastAPI, UploadFile, File, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pypdf import PdfReader
-from transformers import pipeline
-from sentence_transformers import SentenceTransformer
-import faiss
-import numpy as np
 import shutil
 import os
 import json
@@ -14,7 +10,7 @@ import hashlib
 import requests
 from datetime import datetime
 from io import BytesIO
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Any as FaissIndexType # fallback name if needed
 
 app = FastAPI(title="MindMesh AI Backend")
 
@@ -38,7 +34,7 @@ CHATS_FILE = os.path.join(UPLOAD_FOLDER, "chats.json")
 document_registry: Dict[str, Any] = {}
 document_chunks: List[Dict[str, Any]] = []
 document_embeddings: List[List[float]] = []
-index: Optional[faiss.IndexFlatL2] = None
+index: Any = None
 chat_history: Dict[str, Any] = {}
 
 # Model loading references (Lazy loaded to optimize RAM & startup time)
@@ -49,6 +45,7 @@ _embedding_model = None
 def get_summarizer():
     global _summarizer
     if _summarizer is None:
+        from transformers import pipeline
         print("Loading local summarization model (BART)...")
         _summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
     return _summarizer
@@ -56,6 +53,7 @@ def get_summarizer():
 def get_chatbot():
     global _chatbot
     if _chatbot is None:
+        from transformers import pipeline
         print("Loading local chatbot model (Flan-T5)...")
         _chatbot = pipeline("text2text-generation", model="google/flan-t5-base")
     return _chatbot
@@ -63,6 +61,7 @@ def get_chatbot():
 def get_embedding_model():
     global _embedding_model
     if _embedding_model is None:
+        from sentence_transformers import SentenceTransformer
         print("Loading local embedding model (SentenceTransformers)...")
         _embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
     return _embedding_model
@@ -78,6 +77,8 @@ def save_data():
         json.dump(chat_history, f, indent=2)
         
     if index is not None and len(document_embeddings) > 0:
+        import faiss
+        import numpy as np
         faiss.write_index(index, INDEX_FILE)
         np.save(EMBEDDINGS_FILE, np.array(document_embeddings).astype("float32"))
     else:
@@ -103,12 +104,14 @@ def load_data():
             print(f"Error loading chunks: {e}")
     if os.path.exists(EMBEDDINGS_FILE):
         try:
+            import numpy as np
             embeddings_array = np.load(EMBEDDINGS_FILE)
             document_embeddings.extend(embeddings_array.tolist())
         except Exception as e:
             print(f"Error loading embeddings: {e}")
     if os.path.exists(INDEX_FILE):
         try:
+            import faiss
             index = faiss.read_index(INDEX_FILE)
         except Exception as e:
             print(f"Error loading FAISS index: {e}")
@@ -187,6 +190,8 @@ def list_documents():
 @app.delete("/documents/{doc_id}")
 def delete_document(doc_id: str):
     global index, document_chunks, document_embeddings
+    import numpy as np
+    import faiss
     
     if doc_id not in document_registry:
         return {"error": "Document not found"}, 404
@@ -236,6 +241,8 @@ async def upload_pdf(
     x_gemini_api_key: Optional[str] = Header(None)
 ):
     global index
+    import numpy as np
+    import faiss
     
     file_content = await file.read()
     content_hash = hashlib.md5(file_content).hexdigest()
@@ -377,6 +384,7 @@ async def semantic_search(
     doc_id: Optional[str] = Query(None)
 ):
     global index
+    import numpy as np
     
     q = request.query if request else query
     d_id = request.doc_id if request else doc_id
@@ -424,6 +432,7 @@ async def chat_with_documents(
     x_gemini_api_key: Optional[str] = Header(None)
 ):
     global index
+    import numpy as np
     
     q = request.question if request else question
     d_id = request.doc_id if request else doc_id
