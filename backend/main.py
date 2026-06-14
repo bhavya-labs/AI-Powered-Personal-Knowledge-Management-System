@@ -42,8 +42,13 @@ _summarizer = None
 _chatbot = None
 _embedding_model = None
 
+# Detect low-memory environment (e.g. Render Free Tier)
+LOW_MEMORY_MODE = os.environ.get("LOW_MEMORY_MODE", "").lower() == "true" or os.environ.get("RENDER") == "true"
+
 def get_summarizer():
     global _summarizer
+    if LOW_MEMORY_MODE:
+        raise RuntimeError("Local heavy summarization models are disabled in low-memory environments (Render). Please configure a Gemini API Key in Settings.")
     if _summarizer is None:
         from transformers import pipeline
         print("Loading local summarization model (BART)...")
@@ -52,6 +57,8 @@ def get_summarizer():
 
 def get_chatbot():
     global _chatbot
+    if LOW_MEMORY_MODE:
+        raise RuntimeError("Local heavy chatbot models are disabled in low-memory environments (Render). Please configure a Gemini API Key in Settings.")
     if _chatbot is None:
         from transformers import pipeline
         print("Loading local chatbot model (Flan-T5)...")
