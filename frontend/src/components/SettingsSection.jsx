@@ -20,6 +20,12 @@ function SettingsSection({ onRegistryUpdate }) {
   }, []);
 
   const handleSaveSettings = () => {
+    // Validate Backend API URL
+    if (apiUrl && !apiUrl.startsWith("http://") && !apiUrl.startsWith("https://")) {
+      alert("Validation Error: Please enter a valid Backend API URL starting with http:// or https://");
+      return;
+    }
+    
     localStorage.setItem("mindmesh_engine", engine);
     localStorage.setItem("mindmesh_gemini_key", apiKey);
     localStorage.setItem("mindmesh_api_url", apiUrl);
