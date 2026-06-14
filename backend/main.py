@@ -67,11 +67,41 @@ def get_chatbot():
 
 def get_embedding_model():
     global _embedding_model
+    if LOW_MEMORY_MODE:
+        raise RuntimeError("Local embedding models are disabled in low-memory environments (Render). Please configure a Gemini API Key in Settings.")
     if _embedding_model is None:
         from sentence_transformers import SentenceTransformer
         print("Loading local embedding model (SentenceTransformers)...")
         _embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
     return _embedding_model
+
+def get_embeddings_for_texts(texts: List[str], api_key: Optional[str] = None) -> List[List[float]]:
+    if api_key:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents?key={api_key}"
+            headers = {"Content-Type": "application/json"}
+            requests_payload = []
+            for text in texts:
+                requests_payload.append({
+                    "model": "models/text-embedding-004",
+                    "content": {
+                        "parts": [{"text": text}]
+                    }
+                })
+            payload = {"requests": requests_payload}
+            response = requests.post(url, json=payload, headers=headers, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+            embeddings = [emb["values"] for emb in data["embeddings"]]
+            return embeddings
+        except Exception as e:
+            print(f"Failed to generate embeddings using Gemini API, falling back to local: {e}")
+            if LOW_MEMORY_MODE:
+                raise RuntimeError(f"Gemini API embedding failed and local model is disabled in low-memory environment: {e}")
+
+    # Fallback to local
+    local_embedder = get_embedding_model()
+    return local_embedder.encode(texts).tolist()
 
 # Persistence helpers
 def save_data():
@@ -351,12 +381,11 @@ async def upload_pdf(
         })
         
     # Generate embeddings
-    local_embedder = get_embedding_model()
     chunk_texts = [c["text"] for c in chunks_list]
-    new_embeddings = local_embedder.encode(chunk_texts)
+    new_embeddings = get_embeddings_for_texts(chunk_texts, x_gemini_api_key)
     
     document_chunks.extend(chunks_list)
-    document_embeddings.extend(new_embeddings.tolist())
+    document_embeddings.extend(new_embeddings)
     
     embedding_array = np.array(document_embeddings).astype("float32")
     dimension = embedding_array.shape[1]
@@ -388,7 +417,8 @@ async def upload_pdf(
 async def semantic_search(
     request: Optional[SearchRequest] = None,
     query: Optional[str] = Query(None),
-    doc_id: Optional[str] = Query(None)
+    doc_id: Optional[str] = Query(None),
+    x_gemini_api_key: Optional[str] = Header(None)
 ):
     global index
     import numpy as np
@@ -402,12 +432,11 @@ async def semantic_search(
     if index is None:
         return {"results": []}
         
-    local_embedder = get_embedding_model()
-    query_embedding = local_embedder.encode([q])
+    query_embeddings = get_embeddings_for_texts([q], x_gemini_api_key)
     
     search_k = min(30, len(document_chunks))
     distances, indices = index.search(
-        np.array(query_embedding).astype("float32"),
+        np.array(query_embeddings).astype("float32"),
         k=search_k
     )
     
@@ -450,12 +479,11 @@ async def chat_with_documents(
     if index is None:
         return {"error": "No documents uploaded yet. Please upload a PDF first."}
         
-    local_embedder = get_embedding_model()
-    question_embedding = local_embedder.encode([q])
+    question_embeddings = get_embeddings_for_texts([q], x_gemini_api_key)
     
     search_k = min(30, len(document_chunks))
     distances, indices = index.search(
-        np.array(question_embedding).astype("float32"),
+        np.array(question_embeddings).astype("float32"),
         k=search_k
     )
     

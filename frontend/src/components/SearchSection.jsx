@@ -18,11 +18,20 @@ function SearchSection({ documents = [] }) {
       setLoading(true);
       setSearched(true);
 
+      const savedEngine = localStorage.getItem("mindmesh_engine") || "local";
+      const savedKey = localStorage.getItem("mindmesh_gemini_key") || "";
+      
+      const headers = {};
+      if (savedEngine === "gemini" && savedKey) {
+        headers["X-Gemini-API-Key"] = savedKey;
+      }
+
       const response = await axios.post(`${getApiBaseUrl()}/search`, null, {
         params: {
           query: query,
           doc_id: selectedDocId || undefined
-        }
+        },
+        headers
       });
 
       setResults(response.data.results || []);
