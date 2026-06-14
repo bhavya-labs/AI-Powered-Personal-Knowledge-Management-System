@@ -46,7 +46,7 @@ function App() {
   }, []);
 
   const renderContent = () => {
-    if (!isServerOnline) {
+    if (!isServerOnline && activeTab !== "settings") {
       return (
         <div className="bg-zinc-900/35 border border-zinc-800 rounded-2xl p-12 text-center flex flex-col items-center justify-center min-h-[400px] animate-fade-in">
           <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/25 flex items-center justify-center text-red-500 mb-4 animate-pulse">
