@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from pypdf import PdfReader
 import shutil
@@ -13,6 +14,14 @@ from io import BytesIO
 from typing import Optional, List, Dict, Any, Any as FaissIndexType # fallback name if needed
 
 app = FastAPI(title="MindMesh AI Backend")
+
+@app.exception_handler(RuntimeError)
+async def runtime_error_handler(request, exc):
+    return JSONResponse(
+        status_code=400,
+        content={"detail": str(exc)}
+    )
+
 
 # CORS Setup
 app.add_middleware(
