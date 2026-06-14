@@ -184,9 +184,10 @@ function ChatSection({ documents = [] }) {
 
     } catch (error) {
       console.error(error);
+      const errorText = error.response?.data?.detail || "I encountered an error connecting to the AI model. Please verify that your backend server is running, or double-check your Gemini API key in Settings.";
       const errorMsg = {
         sender: "ai",
-        text: "I encountered an error connecting to the AI model. Please verify that your backend server is running, or double-check your Gemini API key in Settings.",
+        text: `Error: ${errorText}`,
         sources: [],
         timestamp: new Date().toISOString()
       };

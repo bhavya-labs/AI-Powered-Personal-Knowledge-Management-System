@@ -112,7 +112,8 @@ function UploadSection({ documents = [], onRegistryUpdate }) {
       
     } catch (error) {
       console.error(error);
-      setUploadStatus("Upload or Indexing Failed");
+      const errorMsg = error.response?.data?.detail || "Upload or Indexing Failed";
+      setUploadStatus(`Indexing Failed: ${errorMsg}`);
     } finally {
       setLoading(false);
     }

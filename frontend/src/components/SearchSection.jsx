@@ -37,6 +37,8 @@ function SearchSection({ documents = [] }) {
       setResults(response.data.results || []);
     } catch (error) {
       console.error("Semantic search failed:", error);
+      const errorMsg = error.response?.data?.detail || "Semantic search failed";
+      alert(`Search Error: ${errorMsg}`);
       setResults([]);
     } finally {
       setLoading(false);
