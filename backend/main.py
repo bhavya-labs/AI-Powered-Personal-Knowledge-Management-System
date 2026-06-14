@@ -87,12 +87,12 @@ def get_embedding_model():
 def get_embeddings_for_texts(texts: List[str], api_key: Optional[str] = None) -> List[List[float]]:
     if api_key:
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents?key={api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents?key={api_key}"
             headers = {"Content-Type": "application/json"}
             requests_payload = []
             for text in texts:
                 requests_payload.append({
-                    "model": "models/text-embedding-004",
+                    "model": "models/gemini-embedding-001",
                     "content": {
                         "parts": [{"text": text}]
                     }
