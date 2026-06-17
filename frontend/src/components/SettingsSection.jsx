@@ -6,14 +6,14 @@ import { getApiBaseUrl } from "../config";
 function SettingsSection({ onRegistryUpdate }) {
   const [engine, setEngine] = useState("local");
   const [apiKey, setApiKey] = useState("");
-  const [apiUrl, setApiUrl] = useState("http://127.0.0.1:8000");
+  const [apiUrl, setApiUrl] = useState("");
   const [saveStatus, setSaveStatus] = useState("");
   const [isWiping, setIsWiping] = useState(false);
 
   useEffect(() => {
     const savedEngine = localStorage.getItem("mindmesh_engine") || "local";
     const savedKey = localStorage.getItem("mindmesh_gemini_key") || "";
-    const savedApiUrl = localStorage.getItem("mindmesh_api_url") || "http://127.0.0.1:8000";
+    const savedApiUrl = getApiBaseUrl();
     setEngine(savedEngine);
     setApiKey(savedKey);
     setApiUrl(savedApiUrl);
